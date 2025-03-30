@@ -1,45 +1,41 @@
 
+# Stock Market Tracker - Python Application
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+This application allows users to track stock prices, view historical data, and analyze technical indicators.
 
-Follow these steps:
+## Features
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+- Search for stocks locally and online using Yahoo Finance API
+- View current stock prices and price changes
+- Display historical price data with candlestick charts
+- Calculate and display technical indicators (RSI, MACD, Moving Averages, Bollinger Bands)
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+## Setup
 
-# Step 3: Install the necessary dependencies.
-npm i
+1. Install required dependencies:
+   ```
+   pip install -r requirements.txt
+   ```
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
+2. Run the Streamlit application:
+   ```
+   streamlit run app.py
+   ```
 
-**Edit a file directly in GitHub**
+3. Open your browser and navigate to the URL provided by Streamlit (typically http://localhost:8501)
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## Usage
 
-**Use GitHub Codespaces**
+1. Search for a stock by entering its ticker symbol and clicking "Search"
+2. Toggle between "Local" and "Online" search modes to find stocks
+3. Select a stock from the list to view its details
+4. Analyze the candlestick chart and technical indicators
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## Technologies Used
 
-## What technologies are used for this project?
-
-This project is built with .
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-
+- Python 3.8+
+- Streamlit for the frontend interface
+- YFinance for stock data retrieval
+- Pandas for data manipulation
+- Plotly for interactive charts
+- NumPy for numerical calculations
