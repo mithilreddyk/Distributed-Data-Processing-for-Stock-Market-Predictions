@@ -6,6 +6,7 @@ import plotly.graph_objects as go
 from datetime import datetime, timedelta
 import numpy as np
 from utils.technical_indicators import calculate_technical_indicators
+from utils.sentiment_analysis import get_stock_sentiment_summary
 
 st.set_page_config(
     page_title="Stock Market Tracker",
@@ -30,6 +31,12 @@ if "search_mode" not in st.session_state:
 
 if "is_processing" not in st.session_state:
     st.session_state.is_processing = False
+
+if "show_ml_insights" not in st.session_state:
+    st.session_state.show_ml_insights = False
+
+if "sentiment_data" not in st.session_state:
+    st.session_state.sentiment_data = None
 
 # UI Layout
 st.title("Stock Market Tracker")
@@ -86,6 +93,10 @@ with col1:
                             
                             st.session_state.selected_stock = search_query.upper()
                             st.success(f"Found and added stock: {info.get('shortName', search_query.upper())}")
+                            
+                            # Reset sentiment data
+                            st.session_state.sentiment_data = None
+                            st.session_state.show_ml_insights = False
                         else:
                             st.error(f"No recent data available for {search_query.upper()}")
                     else:
@@ -108,6 +119,9 @@ with col1:
         
         if st.button(f"Select {symbol}"):
             st.session_state.selected_stock = symbol
+            # Reset sentiment data when changing stocks
+            st.session_state.sentiment_data = None
+            st.session_state.show_ml_insights = False
             st.experimental_rerun()
 
 # Main content
@@ -119,11 +133,17 @@ with col2:
         
         # Stock card
         st.subheader(f"{symbol} - {stock_data['name']}")
-        price_col, change_col = st.columns([1, 1])
+        price_col, change_col, ml_col = st.columns([1, 1, 1])
         with price_col:
             st.metric("Current Price", f"${stock_data['price']:.2f}")
         with change_col:
             st.metric("Change", f"{stock_data['change']:.2f}", delta=f"{stock_data['change']:.2f}")
+        with ml_col:
+            if st.button("Generate ML Insights", key="ml_insights_btn"):
+                with st.spinner("Analyzing stock data with machine learning..."):
+                    # Get sentiment analysis and ML insights
+                    st.session_state.sentiment_data = get_stock_sentiment_summary(symbol)
+                    st.session_state.show_ml_insights = True
         
         # Get historical data
         try:
@@ -176,6 +196,54 @@ with col2:
                     st.metric("200-Day SMA", f"${indicators['SMA_200']:.2f}")
                 with indicator_cols2[2]:
                     st.metric("Bollinger Bands", f"${indicators['BB_middle']:.2f} (±{indicators['BB_width']:.2f})")
+                
+                # Show ML insights if requested
+                if st.session_state.show_ml_insights and st.session_state.sentiment_data:
+                    sentiment_data = st.session_state.sentiment_data
+                    
+                    st.subheader("AI Analysis & Insights")
+                    
+                    # Sentiment indicators
+                    sentiment_cols = st.columns(3)
+                    with sentiment_cols[0]:
+                        sentiment_score = sentiment_data["sentiment_score"]
+                        sentiment_color = "green" if sentiment_score > 0.05 else "red" if sentiment_score < -0.05 else "gray"
+                        st.metric("News Sentiment", 
+                                  sentiment_data["sentiment_label"], 
+                                  f"{sentiment_score:.2f}", 
+                                  delta_color="normal" if sentiment_score >= 0 else "inverse")
+                    
+                    with sentiment_cols[1]:
+                        # Show number of news articles analyzed
+                        num_articles = 0
+                        if "news_sentiment" in sentiment_data and "analyzed_news" in sentiment_data["news_sentiment"]:
+                            num_articles = len(sentiment_data["news_sentiment"]["analyzed_news"])
+                        st.metric("News Articles Analyzed", num_articles)
+                    
+                    with sentiment_cols[2]:
+                        # Calculate stock momentum based on recent price action
+                        recent_close = historical_data['Close'].iloc[-5:]
+                        momentum = (recent_close.iloc[-1] - recent_close.iloc[0]) / recent_close.iloc[0] * 100
+                        st.metric("5-Day Momentum", f"{momentum:.2f}%", 
+                                  f"{momentum:.2f}%",
+                                  delta_color="normal" if momentum >= 0 else "inverse")
+                    
+                    # Stock insights
+                    st.subheader("AI Generated Summary")
+                    st.write(sentiment_data["insights"])
+                    
+                    # News headlines
+                    if "news_sentiment" in sentiment_data and "analyzed_news" in sentiment_data["news_sentiment"]:
+                        st.subheader("Recent News Headlines")
+                        for article in sentiment_data["news_sentiment"]["analyzed_news"]:
+                            title = article.get("title", "")
+                            publisher = article.get("publisher", "")
+                            sentiment_score = article.get("sentiment", {}).get("vader", {}).get("compound", 0)
+                            sentiment_color = "green" if sentiment_score > 0.05 else "red" if sentiment_score < -0.05 else "gray"
+                            
+                            st.markdown(f"**{title}** - *{publisher}*")
+                            st.markdown(f"<span style='color:{sentiment_color}'>Sentiment: {sentiment_score:.2f}</span>", unsafe_allow_html=True)
+                            st.markdown("---")
             else:
                 st.warning("No historical data available")
         except Exception as e:
