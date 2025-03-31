@@ -8,6 +8,7 @@ from bs4 import BeautifulSoup
 import os
 import yfinance as yf
 import re
+from utils.ml_algorithms import get_ml_predictions, compare_algorithm_performance
 
 # Download necessary NLTK data (first time only)
 try:
@@ -88,7 +89,7 @@ def get_news_sentiment(symbol, num_articles=5):
         "overall_sentiment": overall_sentiment
     }
 
-def generate_stock_insights(symbol, price_data=None):
+def generate_stock_insights(symbol, price_data=None, ml_predictions=None):
     """Generate insights about a stock using available data."""
     # Get stock information
     stock = yf.Ticker(symbol)
@@ -129,7 +130,28 @@ def generate_stock_insights(symbol, price_data=None):
             market_cap_str = f"${market_cap / 1_000_000_000:.2f} billion"
         else:
             market_cap_str = f"${market_cap / 1_000_000:.2f} million"
-        summary += f"Market Cap: {market_cap_str}\n"
+        summary += f"Market Cap: {market_cap_str}\n\n"
+    
+    # Add ML predictions if available
+    if ml_predictions:
+        summary += "Machine Learning Predictions:\n"
+        summary += f"Model Used: {ml_predictions.get('algorithm', 'Ensemble')}\n"
+        
+        if 'predictions' in ml_predictions and ml_predictions['predictions']:
+            # Get first and last prediction
+            first_pred = ml_predictions['predictions'][0]
+            last_pred = ml_predictions['predictions'][-1]
+            
+            # Calculate overall predicted change
+            current_price = price_data.get('price') if price_data else first_pred['price']
+            predicted_price = last_pred['price']
+            change_percent = ((predicted_price - current_price) / current_price) * 100
+            
+            summary += f"30-Day Prediction: ${predicted_price:.2f} ({'+' if change_percent >= 0 else ''}{change_percent:.2f}%)\n"
+            
+            if 'model_metrics' in ml_predictions:
+                metrics = ml_predictions['model_metrics']
+                summary += f"Model Confidence: {metrics.get('confidence', 0) * 100:.2f}%\n\n"
     
     summary += "\nThis is an automated analysis and should not be considered financial advice."
     
@@ -153,8 +175,11 @@ def get_stock_sentiment_summary(symbol):
     else:
         price_data = None
     
+    # Get ML predictions
+    ml_predictions = get_ml_predictions(symbol, algorithm='ensemble', days=30)
+    
     # Generate insights
-    insights = generate_stock_insights(symbol, price_data)
+    insights = generate_stock_insights(symbol, price_data, ml_predictions)
     
     # Calculate overall sentiment score
     if "overall_sentiment" in news_sentiment:
@@ -164,10 +189,15 @@ def get_stock_sentiment_summary(symbol):
         vader_score = 0
         sentiment_label = "Neutral"
     
+    # Compare algorithm performance
+    algo_comparison = compare_algorithm_performance(symbol)
+    
     return {
         "symbol": symbol,
         "insights": insights,
         "news_sentiment": news_sentiment,
         "sentiment_score": vader_score,
-        "sentiment_label": sentiment_label
+        "sentiment_label": sentiment_label,
+        "ml_predictions": ml_predictions,
+        "algorithm_comparison": algo_comparison
     }

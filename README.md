@@ -1,7 +1,7 @@
 
 # Stock Market Tracker - Python Application
 
-This application allows users to track stock prices, view historical data, analyze technical indicators, and leverage machine learning for stock sentiment analysis.
+This application allows users to track stock prices, view historical data, analyze technical indicators, and leverage machine learning for stock sentiment analysis and price prediction.
 
 ## Features
 
@@ -12,7 +12,13 @@ This application allows users to track stock prices, view historical data, analy
 - Machine Learning features:
   - News sentiment analysis using Natural Language Processing
   - AI-generated stock summaries and insights
-  - Technical indicator analysis
+  - Advanced ML stock price prediction algorithms:
+    - Linear Regression
+    - Random Forest
+    - Support Vector Machine (SVM)
+    - Ensemble method (combination of all algorithms)
+  - MapReduce-like parallel data processing
+  - Algorithm performance comparison
 
 ## Setup
 
@@ -39,18 +45,36 @@ This application allows users to track stock prices, view historical data, analy
 2. Toggle between "Local" and "Online" search modes to find stocks
 3. Select a stock from the list to view its details
 4. Analyze the candlestick chart and technical indicators
-5. Click "Generate ML Insights" to view AI-powered analysis and sentiment
+5. Choose a machine learning algorithm for price prediction:
+   - Linear Regression: Simple but effective for stocks with linear price trends
+   - Random Forest: Better for capturing non-linear relationships
+   - SVM: Good for identifying complex patterns
+   - Ensemble: Combines all algorithms for more robust predictions
+6. Click "Generate ML Insights" to view AI-powered analysis and predictions
+
+## Machine Learning Approach
+
+The application uses a MapReduce-like approach to process large datasets in parallel:
+- Map phase: Splits data into chunks and processes each chunk independently
+- Reduce phase: Combines results from all chunks for final prediction
+
+The prediction pipeline includes:
+1. Feature engineering from historical price data
+2. Model training using the selected algorithm
+3. Price prediction for the next 30 days
+4. Performance evaluation and algorithm comparison
 
 ## Technologies Used
 
 - Python 3.8+
 - Streamlit for the frontend interface
 - YFinance for stock data retrieval
-- Pandas for data manipulation
+- Pandas and NumPy for data manipulation
 - Plotly for interactive charts
-- NumPy for numerical calculations
+- Scikit-learn for machine learning models
 - NLTK and Transformers for natural language processing and sentiment analysis
-- PyTorch for machine learning models
+- PyTorch for transformer models
+- Joblib for model serialization
 
 ## Notes
 

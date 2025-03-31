@@ -7,12 +7,16 @@ from datetime import datetime, timedelta
 import numpy as np
 from utils.technical_indicators import calculate_technical_indicators
 from utils.sentiment_analysis import get_stock_sentiment_summary
+import os
 
 st.set_page_config(
     page_title="Stock Market Tracker",
     page_icon="📈",
     layout="wide"
 )
+
+# Create models directory if it doesn't exist
+os.makedirs('models', exist_ok=True)
 
 # Initialize session state variables
 if "stocks" not in st.session_state:
@@ -37,6 +41,9 @@ if "show_ml_insights" not in st.session_state:
 
 if "sentiment_data" not in st.session_state:
     st.session_state.sentiment_data = None
+
+if "selected_algorithm" not in st.session_state:
+    st.session_state.selected_algorithm = "ensemble"
 
 # UI Layout
 st.title("Stock Market Tracker")
@@ -123,6 +130,35 @@ with col1:
             st.session_state.sentiment_data = None
             st.session_state.show_ml_insights = False
             st.experimental_rerun()
+    
+    # ML Algorithm Selection
+    st.subheader("ML Algorithm")
+    algorithm = st.radio(
+        "Select Prediction Algorithm",
+        options=["Linear Regression", "Random Forest", "SVM", "Ensemble (All)"],
+        index=3,
+        key="algorithm_selector"
+    )
+    
+    # Map the selection to algorithm code
+    algorithm_map = {
+        "Linear Regression": "linear_regression",
+        "Random Forest": "random_forest",
+        "SVM": "svm",
+        "Ensemble (All)": "ensemble"
+    }
+    
+    st.session_state.selected_algorithm = algorithm_map[algorithm]
+    
+    # Display algorithm info
+    if algorithm == "Linear Regression":
+        st.info("Linear Regression uses a linear approach to modeling the relationship between input features and stock prices.")
+    elif algorithm == "Random Forest":
+        st.info("Random Forest uses multiple decision trees to make more accurate predictions with better handling of non-linear relationships.")
+    elif algorithm == "SVM":
+        st.info("Support Vector Machine (SVM) is effective for capturing complex patterns in market data that may not be visible with other algorithms.")
+    else:
+        st.info("Ensemble combines predictions from multiple algorithms for a more robust forecast.")
 
 # Main content
 with col2:
@@ -140,7 +176,7 @@ with col2:
             st.metric("Change", f"{stock_data['change']:.2f}", delta=f"{stock_data['change']:.2f}")
         with ml_col:
             if st.button("Generate ML Insights", key="ml_insights_btn"):
-                with st.spinner("Analyzing stock data with machine learning..."):
+                with st.spinner(f"Analyzing {symbol} with {st.session_state.selected_algorithm} algorithm..."):
                     # Get sentiment analysis and ML insights
                     st.session_state.sentiment_data = get_stock_sentiment_summary(symbol)
                     st.session_state.show_ml_insights = True
@@ -165,6 +201,26 @@ with col2:
                     close=historical_data['Close'],
                     name="Candlestick"
                 ))
+                
+                # Add predictions if available
+                if st.session_state.show_ml_insights and st.session_state.sentiment_data:
+                    sentiment_data = st.session_state.sentiment_data
+                    if "ml_predictions" in sentiment_data and sentiment_data["ml_predictions"]:
+                        predictions = sentiment_data["ml_predictions"].get("predictions", [])
+                        
+                        if predictions:
+                            # Extract prediction data
+                            pred_dates = [p["date"] for p in predictions]
+                            pred_prices = [p["price"] for p in predictions]
+                            
+                            # Add prediction trace
+                            fig.add_trace(go.Scatter(
+                                x=pred_dates,
+                                y=pred_prices,
+                                mode='lines',
+                                line=dict(color='rgb(0, 200, 0)', width=2, dash='dash'),
+                                name=f"{st.session_state.selected_algorithm.replace('_', ' ').title()} Prediction"
+                            ))
                 
                 fig.update_layout(
                     title=f"{symbol} Stock Price",
@@ -227,6 +283,65 @@ with col2:
                         st.metric("5-Day Momentum", f"{momentum:.2f}%", 
                                   f"{momentum:.2f}%",
                                   delta_color="normal" if momentum >= 0 else "inverse")
+                                  
+                    # ML Prediction Results
+                    if "ml_predictions" in sentiment_data and sentiment_data["ml_predictions"]:
+                        ml_predictions = sentiment_data["ml_predictions"]
+                        
+                        st.subheader("Machine Learning Predictions")
+                        
+                        # Prediction metrics
+                        pred_cols = st.columns(3)
+                        with pred_cols[0]:
+                            algorithm_name = ml_predictions.get("algorithm", "ensemble").replace("_", " ").title()
+                            st.metric("Algorithm", algorithm_name)
+                        
+                        with pred_cols[1]:
+                            if "model_metrics" in ml_predictions:
+                                confidence = ml_predictions["model_metrics"].get("confidence", 0)
+                                st.metric("Model Confidence", f"{confidence*100:.2f}%")
+                        
+                        with pred_cols[2]:
+                            if "predictions" in ml_predictions and ml_predictions["predictions"]:
+                                last_pred = ml_predictions["predictions"][-1]
+                                current_price = stock_data["price"]
+                                pred_change = ((last_pred["price"] - current_price) / current_price) * 100
+                                st.metric("30-Day Forecast", 
+                                          f"${last_pred['price']:.2f}", 
+                                          f"{pred_change:+.2f}%",
+                                          delta_color="normal" if pred_change >= 0 else "inverse")
+                    
+                        # Algorithm comparison
+                        if "algorithm_comparison" in sentiment_data and sentiment_data["algorithm_comparison"]:
+                            st.subheader("Algorithm Performance Comparison")
+                            
+                            algo_data = sentiment_data["algorithm_comparison"]
+                            
+                            # Create comparison table
+                            algo_df = pd.DataFrame.from_dict(algo_data, orient='index')
+                            
+                            # Sort by accuracy (highest first)
+                            if not algo_df.empty and 'accuracy' in algo_df.columns:
+                                algo_df = algo_df.sort_values('accuracy', ascending=False)
+                                
+                                # Highlight the best algorithm
+                                st.markdown(f"**Best Algorithm:** {algo_df.index[0].replace('_', ' ').title()} (Accuracy: {algo_df['accuracy'].iloc[0]}%)")
+                                
+                                # Format column names
+                                algo_df.columns = [col.upper() for col in algo_df.columns]
+                                algo_df.index = [idx.replace('_', ' ').title() for idx in algo_df.index]
+                                
+                                # Display table
+                                st.table(algo_df)
+                                
+                                # Add explanation
+                                st.markdown("""
+                                **Metrics Explanation:**
+                                - **MAE:** Mean Absolute Error - Average of absolute differences between predictions and actual values
+                                - **RMSE:** Root Mean Squared Error - Square root of the average squared differences
+                                - **MAPE:** Mean Absolute Percentage Error - Average percentage difference
+                                - **ACCURACY:** 100% - MAPE (higher is better)
+                                """)
                     
                     # Stock insights
                     st.subheader("AI Generated Summary")
