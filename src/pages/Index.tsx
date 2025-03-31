@@ -15,6 +15,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/components/ui/use-toast";
+import MLModelSelector, { MLAlgorithm } from "@/components/MLModelSelector";
+import MLResultsComparison from "@/components/MLResultsComparison";
 
 const Index = () => {
   const { toast } = useToast();
@@ -25,6 +27,9 @@ const Index = () => {
   const [processingNodes, setProcessingNodes] = useState<ProcessingNode[]>(mockProcessingNodes);
   const [loading, setLoading] = useState<boolean>(true);
   const [loadingPrediction, setLoadingPrediction] = useState<boolean>(false);
+  const [selectedAlgorithm, setSelectedAlgorithm] = useState<MLAlgorithm>("ensemble");
+  const [algorithmComparison, setAlgorithmComparison] = useState<any>({});
+  const [activeTab, setActiveTab] = useState<string>("chart");
 
   useEffect(() => {
     // Default to first stock
@@ -87,6 +92,9 @@ const Index = () => {
           updatedNodes3[3] = { ...updatedNodes3[3], status: "processing", progress: 50 };
           setProcessingNodes(updatedNodes3);
           
+          // Generate algorithm comparison data
+          generateComparisonData(stock);
+          
           // Simulate prediction completion
           setTimeout(() => {
             const predictions = generatePredictionData(historical, 30);
@@ -108,6 +116,40 @@ const Index = () => {
     }, 1000);
   };
 
+  const generateComparisonData = (stock: StockData) => {
+    // Generate random but realistic comparison data
+    const baseAccuracy = 75 + Math.random() * 10;
+    
+    const comparison = {
+      linear_regression: {
+        mae: 0.5 + Math.random() * 1.5,
+        rmse: 0.8 + Math.random() * 2,
+        mape: 10 + Math.random() * 10,
+        accuracy: baseAccuracy
+      },
+      random_forest: {
+        mae: 0.3 + Math.random() * 1.2,
+        rmse: 0.6 + Math.random() * 1.5,
+        mape: 8 + Math.random() * 8,
+        accuracy: baseAccuracy + 2 + Math.random() * 3
+      },
+      svm: {
+        mae: 0.4 + Math.random() * 1.3,
+        rmse: 0.7 + Math.random() * 1.8,
+        mape: 9 + Math.random() * 9,
+        accuracy: baseAccuracy + 1 + Math.random() * 2
+      },
+      ensemble: {
+        mae: 0.2 + Math.random() * 1.1,
+        rmse: 0.5 + Math.random() * 1.4,
+        mape: 7 + Math.random() * 7,
+        accuracy: baseAccuracy + 3 + Math.random() * 4
+      }
+    };
+    
+    setAlgorithmComparison(comparison);
+  };
+
   const runNewPrediction = () => {
     if (!selectedStock) return;
     
@@ -115,7 +157,7 @@ const Index = () => {
     
     toast({
       title: "Processing Started",
-      description: "Running distributed data processing for new prediction model...",
+      description: `Running ${selectedAlgorithm.replace('_', ' ')} algorithm for prediction...`,
     });
     
     // Reset processing nodes
@@ -134,6 +176,9 @@ const Index = () => {
       
       const indicators = generateTechnicalIndicators(selectedStock);
       setTechnicalIndicators(indicators);
+      
+      // Generate new comparison data
+      generateComparisonData(selectedStock);
       
       // Simulate model completion and prediction generation
       setTimeout(() => {
@@ -155,11 +200,23 @@ const Index = () => {
           
           toast({
             title: "New Prediction Complete",
-            description: `Updated price prediction for ${selectedStock.symbol} is now available.`,
+            description: `Updated price prediction for ${selectedStock.symbol} using ${selectedAlgorithm.replace('_', ' ')} algorithm is now available.`,
           });
+          
+          // Switch to comparison tab after prediction is complete
+          setActiveTab("comparison");
         }, 1500);
       }, 2000);
     }, 2000);
+  };
+
+  const handleAlgorithmChange = (algorithm: MLAlgorithm) => {
+    setSelectedAlgorithm(algorithm);
+    
+    toast({
+      title: "Algorithm Changed",
+      description: `Selected ${algorithm.replace('_', ' ')} algorithm for predictions.`,
+    });
   };
 
   return (
@@ -223,24 +280,44 @@ const Index = () => {
                       </div>
                     </div>
                     
-                    <Separator className="my-4" />
-                    
-                    <div className="flex justify-end mb-4">
-                      <Button 
-                        onClick={runNewPrediction} 
-                        disabled={loadingPrediction}
-                        className="flex items-center gap-2"
-                      >
-                        <CpuIcon className="h-4 w-4" />
-                        {loadingPrediction ? "Processing Data..." : "Generate New Forecast"}
-                      </Button>
-                    </div>
-                    
-                    <StockChart 
-                      symbol={selectedStock.symbol} 
-                      historical={historicalData} 
-                      predictions={loadingPrediction ? undefined : predictionData}
-                    />
+                    <Tabs value={activeTab} onValueChange={setActiveTab}>
+                      <div className="flex justify-between items-center">
+                        <TabsList>
+                          <TabsTrigger value="chart">Price Chart</TabsTrigger>
+                          <TabsTrigger value="models">ML Models</TabsTrigger>
+                          <TabsTrigger value="comparison">Comparison</TabsTrigger>
+                        </TabsList>
+                        
+                        <Button 
+                          onClick={runNewPrediction} 
+                          disabled={loadingPrediction}
+                          className="flex items-center gap-2"
+                        >
+                          <CpuIcon className="h-4 w-4" />
+                          {loadingPrediction ? "Processing Data..." : "Generate New Forecast"}
+                        </Button>
+                      </div>
+                      
+                      <TabsContent value="chart" className="mt-4">
+                        <StockChart 
+                          symbol={selectedStock.symbol} 
+                          historical={historicalData} 
+                          predictions={loadingPrediction ? undefined : predictionData}
+                        />
+                      </TabsContent>
+                      
+                      <TabsContent value="models" className="mt-4">
+                        <MLModelSelector 
+                          selectedModel={selectedAlgorithm} 
+                          onSelectModel={handleAlgorithmChange}
+                          comparisonData={algorithmComparison}
+                        />
+                      </TabsContent>
+                      
+                      <TabsContent value="comparison" className="mt-4">
+                        <MLResultsComparison comparisonData={algorithmComparison} />
+                      </TabsContent>
+                    </Tabs>
                   </div>
                 )}
                 
