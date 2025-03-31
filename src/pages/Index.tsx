@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -29,14 +28,12 @@ const Index = () => {
   const [loadingPrediction, setLoadingPrediction] = useState<boolean>(false);
   const [selectedAlgorithm, setSelectedAlgorithm] = useState<MLAlgorithm>("ensemble");
   const [algorithmComparison, setAlgorithmComparison] = useState<any>({});
-  const [activeTab, setActiveTab] = useState<string>("chart");
+  const [activeTab, setActiveTab] = useState<string>("models");
 
   useEffect(() => {
-    // Default to first stock
     const defaultStock = mockStocks[0];
     setSelectedStock(defaultStock);
     
-    // Simulate data loading
     setTimeout(() => {
       const historical = generateHistoricalData(365, defaultStock.price * 0.5);
       setHistoricalData(historical);
@@ -56,13 +53,11 @@ const Index = () => {
     setLoading(true);
     setLoadingPrediction(true);
     
-    // Simulate data loading
     setTimeout(() => {
       const historical = generateHistoricalData(365, stock.price * 0.5);
       setHistoricalData(historical);
       setLoading(false);
       
-      // Update processing nodes
       const updatedNodes = [...processingNodes];
       updatedNodes[0] = { ...updatedNodes[0], status: "complete", progress: 100 };
       updatedNodes[1] = { ...updatedNodes[1], status: "processing", progress: 0 };
@@ -75,7 +70,6 @@ const Index = () => {
         description: `Data for ${stock.symbol} loaded successfully.`,
       });
       
-      // Simulate feature engineering completion and model training start
       setTimeout(() => {
         const updatedNodes2 = [...updatedNodes];
         updatedNodes2[1] = { ...updatedNodes2[1], status: "complete", progress: 100 };
@@ -85,17 +79,14 @@ const Index = () => {
         const indicators = generateTechnicalIndicators(stock);
         setTechnicalIndicators(indicators);
         
-        // Simulate model completion and prediction generation
         setTimeout(() => {
           const updatedNodes3 = [...updatedNodes2];
           updatedNodes3[2] = { ...updatedNodes3[2], status: "complete", progress: 100 };
           updatedNodes3[3] = { ...updatedNodes3[3], status: "processing", progress: 50 };
           setProcessingNodes(updatedNodes3);
           
-          // Generate algorithm comparison data
           generateComparisonData(stock);
           
-          // Simulate prediction completion
           setTimeout(() => {
             const predictions = generatePredictionData(historical, 30);
             setPredictionData(predictions);
@@ -117,7 +108,6 @@ const Index = () => {
   };
 
   const generateComparisonData = (stock: StockData) => {
-    // Generate random but realistic comparison data
     const baseAccuracy = 75 + Math.random() * 10;
     
     const comparison = {
@@ -160,14 +150,12 @@ const Index = () => {
       description: `Running ${selectedAlgorithm.replace('_', ' ')} algorithm for prediction...`,
     });
     
-    // Reset processing nodes
     const updatedNodes = [...processingNodes];
     updatedNodes[1] = { ...updatedNodes[1], status: "processing", progress: 30 };
     updatedNodes[2] = { ...updatedNodes[2], status: "idle", progress: 0 };
     updatedNodes[3] = { ...updatedNodes[3], status: "idle", progress: 0 };
     setProcessingNodes(updatedNodes);
     
-    // Simulate feature engineering completion and model training start
     setTimeout(() => {
       const updatedNodes2 = [...updatedNodes];
       updatedNodes2[1] = { ...updatedNodes2[1], status: "complete", progress: 100 };
@@ -177,17 +165,14 @@ const Index = () => {
       const indicators = generateTechnicalIndicators(selectedStock);
       setTechnicalIndicators(indicators);
       
-      // Generate new comparison data
       generateComparisonData(selectedStock);
       
-      // Simulate model completion and prediction generation
       setTimeout(() => {
         const updatedNodes3 = [...updatedNodes2];
         updatedNodes3[2] = { ...updatedNodes3[2], status: "complete", progress: 100 };
         updatedNodes3[3] = { ...updatedNodes3[3], status: "processing", progress: 50 };
         setProcessingNodes(updatedNodes3);
         
-        // Simulate prediction completion
         setTimeout(() => {
           const predictions = generatePredictionData(historicalData, 30);
           setPredictionData(predictions);
@@ -203,7 +188,6 @@ const Index = () => {
             description: `Updated price prediction for ${selectedStock.symbol} using ${selectedAlgorithm.replace('_', ' ')} algorithm is now available.`,
           });
           
-          // Switch to comparison tab after prediction is complete
           setActiveTab("comparison");
         }, 1500);
       }, 2000);
