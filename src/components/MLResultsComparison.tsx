@@ -1,6 +1,5 @@
-
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CompareIcon, TrendingUpIcon, TrendingDownIcon } from "lucide-react";
+import { GitCompareIcon, TrendingUpIcon, TrendingDownIcon } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -10,6 +9,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Table2Icon } from "lucide-react";
 
 interface MetricData {
   mae?: number;
@@ -30,17 +30,15 @@ interface MLResultsComparisonProps {
 }
 
 const MLResultsComparison = ({ comparisonData }: MLResultsComparisonProps) => {
-  // If no data is available yet, show placeholder
   if (!comparisonData || Object.keys(comparisonData).length === 0) {
     return (
       <div className="border rounded-lg p-4 text-center text-muted-foreground">
-        <CompareIcon className="mx-auto h-8 w-8 mb-2 opacity-50" />
+        <GitCompareIcon className="mx-auto h-8 w-8 mb-2 opacity-50" />
         <p>Run predictions to see algorithm comparison</p>
       </div>
     );
   }
 
-  // Function to determine which algorithm has the best metric
   const getBestAlgorithm = (metric: string) => {
     let bestAlgo = '';
     let bestValue = metric === 'accuracy' ? 0 : Infinity;
@@ -75,11 +73,11 @@ const MLResultsComparison = ({ comparisonData }: MLResultsComparisonProps) => {
         <h3 className="text-lg font-semibold">Algorithm Performance Comparison</h3>
         <TabsList>
           <TabsTrigger value="table">
-            <TableIcon className="h-4 w-4 mr-2" />
+            <Table2Icon className="h-4 w-4 mr-2" />
             Table
           </TabsTrigger>
           <TabsTrigger value="metrics">
-            <CompareIcon className="h-4 w-4 mr-2" />
+            <GitCompareIcon className="h-4 w-4 mr-2" />
             Metrics
           </TabsTrigger>
         </TabsList>
@@ -127,7 +125,6 @@ const MLResultsComparison = ({ comparisonData }: MLResultsComparisonProps) => {
       
       <TabsContent value="metrics" className="mt-0">
         <div className="grid grid-cols-2 gap-4">
-          {/* Accuracy Card */}
           <div className="border rounded-lg p-4">
             <h4 className="text-sm font-medium text-muted-foreground mb-2">Best Accuracy</h4>
             {(() => {
@@ -146,7 +143,6 @@ const MLResultsComparison = ({ comparisonData }: MLResultsComparisonProps) => {
             })()}
           </div>
           
-          {/* MAE Card */}
           <div className="border rounded-lg p-4">
             <h4 className="text-sm font-medium text-muted-foreground mb-2">Lowest MAE</h4>
             {(() => {
@@ -165,7 +161,6 @@ const MLResultsComparison = ({ comparisonData }: MLResultsComparisonProps) => {
             })()}
           </div>
           
-          {/* RMSE Card */}
           <div className="border rounded-lg p-4">
             <h4 className="text-sm font-medium text-muted-foreground mb-2">Lowest RMSE</h4>
             {(() => {
@@ -184,7 +179,6 @@ const MLResultsComparison = ({ comparisonData }: MLResultsComparisonProps) => {
             })()}
           </div>
           
-          {/* MAPE Card */}
           <div className="border rounded-lg p-4">
             <h4 className="text-sm font-medium text-muted-foreground mb-2">Lowest MAPE</h4>
             {(() => {

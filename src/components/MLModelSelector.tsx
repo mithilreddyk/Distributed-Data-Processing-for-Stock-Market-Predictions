@@ -1,7 +1,7 @@
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { CompareIcon, TableIcon } from "lucide-react";
+import { GitCompareIcon, Table2Icon } from "lucide-react";
 import { useState } from "react";
 
 export type MLAlgorithm = 'linear_regression' | 'random_forest' | 'svm' | 'ensemble';
